@@ -11,15 +11,16 @@ public class GroundController : MonoBehaviour
     {
         groundLayer = LayerMask.NameToLayer("Ground");
     }
-    private void OnCollisionEnter(Collision collision)
+
+    private void OnTriggerEnter(Collider other)
     {
-        if (collision.gameObject.layer == groundLayer)
+        if (other.gameObject.layer == groundLayer)
         {
             grounded = true;
         }
     }
 
-    private void OnCollisionExit(Collision collision)
+    private void OnTriggerExit(Collider other)
     {
         grounded = false; //&= ?
     }

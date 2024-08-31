@@ -10,6 +10,8 @@ public class DebugController : MonoBehaviour
     [Space]
     [SerializeField] private PlayerMovement movementRef;
     [SerializeField] private TMP_Text velocityValue;
+    [Space]
+    [SerializeField] private TMP_Text stateValue;
 
     private void Update()
     {
@@ -20,5 +22,6 @@ public class DebugController : MonoBehaviour
     {
         groundValue.text = controllerRef.IsGrounded().ToString();
         velocityValue.text = movementRef.GetVelocity().ToString("F3");
+        stateValue.text = movementRef.GetMovementState().ToString();
     }
 }
