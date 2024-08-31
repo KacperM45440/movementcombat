@@ -47,4 +47,10 @@ public class PlayerMovement : MonoBehaviour
     {
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(bodyRef.velocity), 0.15f);
     }
+
+    public float GetVelocity()
+    {
+        float velocity = (bodyRef.velocity.magnitude < 0.01f) ? 0 : bodyRef.velocity.magnitude;
+        return velocity;
+    }
 }
