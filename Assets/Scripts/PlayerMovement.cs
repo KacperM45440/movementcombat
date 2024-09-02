@@ -8,8 +8,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private GroundController groundRef;
     [SerializeField] private Rigidbody bodyRef;
     private float moveX;
-    private float moveY;
-    private float jumpForce = 20f;
+    private float moveZ;
+    private float jumpForce = 5f;
     private float baseSpeed = 4f;
     public enum MovementState
     {
@@ -37,7 +37,7 @@ public class PlayerMovement : MonoBehaviour
     private void TakeInput() //Good enough for a quick project, would've gone with the New Input System otherwise
     {
         moveX = Input.GetAxis("Horizontal");
-        moveY = Input.GetAxis("Vertical");
+        moveZ = Input.GetAxis("Vertical");
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -56,8 +56,8 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
         movementState = MovementState.Jump;
-        bodyRef.AddForce(new Vector3(0, jumpForce, 0), ForceMode.Impulse);
-        //StartCoroutine(WaitForLanding());
+        bodyRef.AddForce(new Vector3(0, jumpForce, 0), ForceMode.VelocityChange);
+        StartCoroutine(WaitForLanding());
     }
 
     private void Slide()
@@ -69,11 +69,15 @@ public class PlayerMovement : MonoBehaviour
     {
         if (movementState == MovementState.Run)
         {
-            bodyRef.velocity = baseSpeed * new Vector3(moveX, 0, moveY);
+            Vector3 targetVelocity = new Vector3(moveX, 0, moveZ) * baseSpeed;
+            Vector3 currentVelocity = new(bodyRef.velocity.x, 0, bodyRef.velocity.z);
+            Vector3 velocityChange = targetVelocity - currentVelocity;
+
+            bodyRef.AddForce(velocityChange, ForceMode.VelocityChange);
         }
         if (movementState == MovementState.Jump) 
         {
-            //bodyRef.velocity += Vector3.down * 9.81f;
+
         }
     }
     private void RotatePlayer()
@@ -106,6 +110,7 @@ public class PlayerMovement : MonoBehaviour
 
     private IEnumerator WaitForLanding()
     {
+        yield return new WaitUntil(() => groundRef.IsGrounded() == false);
         yield return new WaitUntil(() => groundRef.IsGrounded() == true);
         movementState = MovementState.Run;
     }
