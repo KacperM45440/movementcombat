@@ -11,7 +11,7 @@ public class HeightController : MonoBehaviour
 
     private void CheckHeight()
     {
-        float newScale = Mathf.Clamp(transform.position.y + 0.5f, 1f, 1.5f);
+        float newScale = Mathf.Lerp(1f, 1.5f, Mathf.Clamp01(transform.position.y * 0.333f));
         transform.localScale = new Vector3(newScale, newScale, newScale);
     }
 }
