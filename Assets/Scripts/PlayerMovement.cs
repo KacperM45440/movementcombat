@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,7 +11,8 @@ public class PlayerMovement : MonoBehaviour
     private float moveX;
     private float moveZ;
     private float jumpForce = 5f;
-    private float baseSpeed = 4f;
+    private float baseSpeed = 5f;
+    private float stopSpeed = 1.5f;
     public enum MovementState
     {
         Run,
@@ -39,13 +41,20 @@ public class PlayerMovement : MonoBehaviour
         moveX = Input.GetAxis("Horizontal");
         moveZ = Input.GetAxis("Vertical");
 
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            Jump();
-        }
         if (Input.GetKeyDown(KeyCode.LeftControl))
         {
             Slide();
+        }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (movementState == MovementState.Slide)
+            {
+                Dash();
+            }
+            else
+            {
+                Jump();
+            }   
         }
     }
 
@@ -55,6 +64,12 @@ public class PlayerMovement : MonoBehaviour
         {
             return;
         }
+
+        if (movementState == MovementState.Jump)
+        {
+            return;
+        }
+
         movementState = MovementState.Jump;
         bodyRef.AddForce(new Vector3(0, jumpForce, 0), ForceMode.VelocityChange);
         StartCoroutine(WaitForLanding());
@@ -62,22 +77,69 @@ public class PlayerMovement : MonoBehaviour
 
     private void Slide()
     {
+        if (!groundRef.IsGrounded())
+        {
+            return;
+        }
 
+        if (movementState == MovementState.Slide)
+        {
+            return;
+        }
+
+        movementState = MovementState.Slide;
+        StartCoroutine(SlideCoroutine());
+    }
+
+    private void Dash()
+    {
+        if (!groundRef.IsGrounded())
+        {
+            return;
+        }
+
+        if (movementState == MovementState.Dash)
+        {
+            return;
+        }
+
+        movementState = MovementState.Dash;
     }
 
     private void MovePlayer()
     {
-        if (movementState == MovementState.Run)
+        bool isMoving = Mathf.Abs(moveX) > 0 || Mathf.Abs(moveZ) > 0;
+        
+        stopSpeed = movementState switch
         {
-            Vector3 targetVelocity = new Vector3(moveX, 0, moveZ) * baseSpeed;
+            MovementState.Run => 1.5f,
+            MovementState.Jump => 1.5f,
+            MovementState.Slide => 6f,
+            MovementState.Dash => 0f,
+            _ => 1.5f,
+        };
+
+        if (isMoving && movementState == MovementState.Run)
+        {
+            Vector3 targetVelocity = new Vector3(moveX, 0, moveZ).normalized * baseSpeed;
             Vector3 currentVelocity = new(bodyRef.velocity.x, 0, bodyRef.velocity.z);
             Vector3 velocityChange = targetVelocity - currentVelocity;
 
             bodyRef.AddForce(velocityChange, ForceMode.VelocityChange);
         }
-        if (movementState == MovementState.Jump) 
+        else
         {
+            Vector3 currentVelocity = new(bodyRef.velocity.x, 0, bodyRef.velocity.z);
+            Vector3 deceleration = stopSpeed * Time.deltaTime * -currentVelocity.normalized;
 
+            if (deceleration.magnitude > currentVelocity.magnitude)
+            {
+                bodyRef.velocity = new Vector3(0, bodyRef.velocity.y, 0);
+            }
+            else
+            {
+                bodyRef.AddForce(deceleration, ForceMode.VelocityChange);
+            }
         }
     }
     private void RotatePlayer()
@@ -87,9 +149,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        Vector3 direction = bodyRef.velocity;
-        direction.y = 0;
-
+        Vector3 direction = new Vector3(moveX, 0, moveZ);
         if (direction != Vector3.zero)
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction);
@@ -112,6 +172,14 @@ public class PlayerMovement : MonoBehaviour
     {
         yield return new WaitUntil(() => groundRef.IsGrounded() == false);
         yield return new WaitUntil(() => groundRef.IsGrounded() == true);
+        movementState = MovementState.Run;
+    }
+
+    private IEnumerator SlideCoroutine()
+    {
+        Vector3 targetVelocity = new Vector3(moveX, 0, moveZ).normalized * baseSpeed;
+        bodyRef.AddForce(targetVelocity, ForceMode.VelocityChange);
+        yield return new WaitUntil(() => bodyRef.velocity.magnitude <= 1.5f);
         movementState = MovementState.Run;
     }
 }
