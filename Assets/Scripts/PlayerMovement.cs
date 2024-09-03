@@ -1,13 +1,11 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private GroundController groundRef;
     [SerializeField] private Rigidbody bodyRef;
+    [SerializeField] private Animator animatorRef;
     private float moveX;
     private float moveZ;
     private float jumpForce = 5f;
@@ -71,8 +69,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         movementState = MovementState.Jump;
-        bodyRef.AddForce(new Vector3(0, jumpForce, 0), ForceMode.VelocityChange);
-        StartCoroutine(WaitForLanding());
+        StartCoroutine(JumpCoroutine());
     }
 
     private void Slide()
@@ -104,12 +101,11 @@ public class PlayerMovement : MonoBehaviour
         }
 
         movementState = MovementState.Dash;
+        StartCoroutine(DashCoroutine());
     }
 
     private void MovePlayer()
     {
-        bool isMoving = Mathf.Abs(moveX) > 0 || Mathf.Abs(moveZ) > 0;
-        
         stopSpeed = movementState switch
         {
             MovementState.Run => 1.5f,
@@ -119,7 +115,9 @@ public class PlayerMovement : MonoBehaviour
             _ => 1.5f,
         };
 
-        if (isMoving && movementState == MovementState.Run)
+        //bool isMoving = Mathf.Abs(moveX) > 0 || Mathf.Abs(moveZ) > 0;
+        //if (isMoving && movementState == MovementState.Run)
+        if (movementState == MovementState.Run)
         {
             Vector3 targetVelocity = new Vector3(moveX, 0, moveZ).normalized * baseSpeed;
             Vector3 currentVelocity = new(bodyRef.velocity.x, 0, bodyRef.velocity.z);
@@ -168,8 +166,9 @@ public class PlayerMovement : MonoBehaviour
         return movementState;
     }    
 
-    private IEnumerator WaitForLanding()
+    private IEnumerator JumpCoroutine()
     {
+        bodyRef.AddForce(new Vector3(0, jumpForce, 0), ForceMode.VelocityChange);
         yield return new WaitUntil(() => groundRef.IsGrounded() == false);
         yield return new WaitUntil(() => groundRef.IsGrounded() == true);
         movementState = MovementState.Run;
@@ -177,9 +176,21 @@ public class PlayerMovement : MonoBehaviour
 
     private IEnumerator SlideCoroutine()
     {
+        animatorRef.SetTrigger("StartSlide");
         Vector3 targetVelocity = new Vector3(moveX, 0, moveZ).normalized * baseSpeed;
         bodyRef.AddForce(targetVelocity, ForceMode.VelocityChange);
         yield return new WaitUntil(() => bodyRef.velocity.magnitude <= 1.5f);
+        animatorRef.SetTrigger("EndSlide");
+        movementState = MovementState.Run;
+    }
+
+    private IEnumerator DashCoroutine()
+    {
+        Vector3 targetVelocity = new Vector3(moveX, jumpForce, moveZ).normalized * baseSpeed;
+        bodyRef.AddForce(targetVelocity, ForceMode.VelocityChange);
+        yield return new WaitUntil(() => groundRef.IsGrounded() == false);
+        yield return new WaitUntil(() => groundRef.IsGrounded() == true);
+        animatorRef.SetTrigger("EndSlide");
         movementState = MovementState.Run;
     }
 }

@@ -216,6 +216,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groundRef: {fileID: 5850501249954942034}
   bodyRef: {fileID: 5451548387741326060}
+  animatorRef: {fileID: 2524041391063598236}
 --- !u!114 &1509758365461879082
 MonoBehaviour:
   m_ObjectHideFlags: 0
