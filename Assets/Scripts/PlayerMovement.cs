@@ -115,14 +115,15 @@ public class PlayerMovement : MonoBehaviour
             _ => 1.5f,
         };
 
-        //bool isMoving = Mathf.Abs(moveX) > 0 || Mathf.Abs(moveZ) > 0;
-        //if (isMoving && movementState == MovementState.Run)
         if (movementState == MovementState.Run)
         {
             Vector3 targetVelocity = new Vector3(moveX, 0, moveZ).normalized * baseSpeed;
             Vector3 currentVelocity = new(bodyRef.velocity.x, 0, bodyRef.velocity.z);
             Vector3 velocityChange = targetVelocity - currentVelocity;
-
+            if (bodyRef.velocity.magnitude > baseSpeed)
+            {
+                velocityChange *= (baseSpeed * 0.01f);
+            }
             bodyRef.AddForce(velocityChange, ForceMode.VelocityChange);
         }
         else

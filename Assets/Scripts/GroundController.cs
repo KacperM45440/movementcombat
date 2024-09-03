@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class GroundController : MonoBehaviour
@@ -7,7 +5,7 @@ public class GroundController : MonoBehaviour
     private bool grounded = false;
     private int groundLayer;
 
-    void Awake()
+    private void Awake()
     {
         groundLayer = LayerMask.NameToLayer("Ground");
     }
@@ -22,7 +20,7 @@ public class GroundController : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        grounded = false; //&= ?
+        grounded = false;
     }
 
     public bool IsGrounded()
