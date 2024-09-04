@@ -20,7 +20,10 @@ public class GroundController : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        grounded = false;
+        if (other.gameObject.layer == groundLayer)
+        {
+            grounded = false;
+        }
     }
 
     public bool IsGrounded()

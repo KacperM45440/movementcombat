@@ -5,7 +5,7 @@ public class EnemyData : MonoBehaviour
 {
     [SerializeField] private PlayerCombat combatRef;
     [SerializeField] private TMP_Text textRef;
-    private int enemyHealth = 11;
+    private int enemyHealth = 15;
 
     private void Start()
     {

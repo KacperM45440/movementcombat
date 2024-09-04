@@ -42,9 +42,9 @@ public class PlayerCombat : MonoBehaviour
     {
         int damage = (int)movementRef.GetVelocity();
 
-        if (damage < 5) 
+        if (damage < 4) 
         {
-            damage = 5;
+            damage = 4;
         }
 
         return damage;

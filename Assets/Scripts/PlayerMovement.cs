@@ -9,7 +9,7 @@ public class PlayerMovement : MonoBehaviour
     private float moveX;
     private float moveZ;
     private float jumpForce = 5f;
-    private float baseSpeed = 5f;
+    private float baseSpeed = 7f;
     private float stopSpeed = 1.5f;
     public enum MovementState
     {
@@ -108,14 +108,16 @@ public class PlayerMovement : MonoBehaviour
     {
         stopSpeed = movementState switch
         {
-            MovementState.Run => 1.5f,
+            MovementState.Run => baseSpeed * 3f,
             MovementState.Jump => 1.5f,
-            MovementState.Slide => 6f,
+            MovementState.Slide => baseSpeed,
             MovementState.Dash => 0f,
             _ => 1.5f,
         };
 
-        if (movementState == MovementState.Run)
+        bool moving = (Mathf.Abs(moveX) > 0 || Mathf.Abs(moveZ) > 0);
+
+        if (movementState == MovementState.Run && moving)
         {
             Vector3 targetVelocity = new Vector3(moveX, 0, moveZ).normalized * baseSpeed;
             Vector3 currentVelocity = new(bodyRef.velocity.x, 0, bodyRef.velocity.z);
@@ -125,6 +127,22 @@ public class PlayerMovement : MonoBehaviour
                 velocityChange *= (baseSpeed * 0.01f);
             }
             bodyRef.AddForce(velocityChange, ForceMode.VelocityChange);
+        }
+        if (movementState == MovementState.Jump)
+        {
+            Vector3 adjustmentVelocity = new Vector3(moveX, 0, moveZ).normalized * 0.05f;
+            Vector3 currentVelocity = new(bodyRef.velocity.x, 0, bodyRef.velocity.z);
+            Vector3 deceleration = stopSpeed * Time.deltaTime * -currentVelocity.normalized;
+
+            if (deceleration.magnitude > currentVelocity.magnitude)
+            {
+                bodyRef.velocity = new Vector3(0, bodyRef.velocity.y, 0);
+            }
+            else
+            {
+
+                bodyRef.AddForce(deceleration + adjustmentVelocity, ForceMode.VelocityChange);
+            }
         }
         else
         {
@@ -137,6 +155,7 @@ public class PlayerMovement : MonoBehaviour
             }
             else
             {
+
                 bodyRef.AddForce(deceleration, ForceMode.VelocityChange);
             }
         }
@@ -148,11 +167,11 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        Vector3 direction = new Vector3(moveX, 0, moveZ);
+        Vector3 direction = new Vector3(moveX, 0, moveZ).normalized;
         if (direction != Vector3.zero)
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.15f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.5f);
         }
     }
 
@@ -172,6 +191,7 @@ public class PlayerMovement : MonoBehaviour
         bodyRef.AddForce(new Vector3(0, jumpForce, 0), ForceMode.VelocityChange);
         yield return new WaitUntil(() => groundRef.IsGrounded() == false);
         yield return new WaitUntil(() => groundRef.IsGrounded() == true);
+        bodyRef.AddForce(Vector3.zero, ForceMode.VelocityChange);
         movementState = MovementState.Run;
     }
 
@@ -180,14 +200,14 @@ public class PlayerMovement : MonoBehaviour
         animatorRef.SetTrigger("StartSlide");
         Vector3 targetVelocity = new Vector3(moveX, 0, moveZ).normalized * baseSpeed;
         bodyRef.AddForce(targetVelocity, ForceMode.VelocityChange);
-        yield return new WaitUntil(() => bodyRef.velocity.magnitude <= 1.5f);
+        yield return new WaitUntil(() => bodyRef.velocity.magnitude <= baseSpeed * 0.625f);
         animatorRef.SetTrigger("EndSlide");
         movementState = MovementState.Run;
     }
 
     private IEnumerator DashCoroutine()
     {
-        Vector3 targetVelocity = new Vector3(moveX, jumpForce, moveZ).normalized * baseSpeed;
+        Vector3 targetVelocity = new Vector3(moveX, jumpForce * 0.5f, moveZ).normalized * baseSpeed;
         bodyRef.AddForce(targetVelocity, ForceMode.VelocityChange);
         yield return new WaitUntil(() => groundRef.IsGrounded() == false);
         yield return new WaitUntil(() => groundRef.IsGrounded() == true);
